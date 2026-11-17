@@ -1,0 +1,12 @@
+{
+  "name": "CodecStream",
+  "private": true,
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev:api": "pnpm --filter api dev",
+    "dev:dashboard": "pnpm --filter dashboard dev",
+    "check": "pnpm --filter api check"
+  }
+}

@@ -1,0 +1,114 @@
+# ============================================================
+# CodecStream — pnpm Monorepo .gitignore
+# Stack: Node/Express API · Next.js Dashboard · Worker · Docker
+# ============================================================
+
+# ───────────────────────────────────────────────
+# Dependencies
+# ───────────────────────────────────────────────
+node_modules/
+.pnpm-store/
+
+# ───────────────────────────────────────────────
+# Environment variables  ⚠️ NEVER commit secrets
+# ───────────────────────────────────────────────
+.env
+.env.*
+!.env.example        # keep the example template
+!.env.*.example
+
+# ───────────────────────────────────────────────
+# TypeScript build artefacts
+# ───────────────────────────────────────────────
+dist/
+build/
+out/
+*.tsbuildinfo
+
+# ───────────────────────────────────────────────
+# Next.js (apps/dashboard)
+# ───────────────────────────────────────────────
+.next/
+.vercel/
+next-env.d.ts
+
+# ───────────────────────────────────────────────
+# Logs
+# ───────────────────────────────────────────────
+*.log
+*.log.*
+logs/
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ───────────────────────────────────────────────
+# AWS / Cloud credentials & keys
+# ───────────────────────────────────────────────
+*.pem
+*.key
+*.p12
+*.pfx
+.aws/
+
+# ───────────────────────────────────────────────
+# Docker volumes & overrides
+# ───────────────────────────────────────────────
+docker-compose.override.yml
+docker-compose.local.yml
+
+# ───────────────────────────────────────────────
+# Redis / database dumps
+# ───────────────────────────────────────────────
+*.rdb
+dump.rdb
+*.aof
+*.dump
+
+# ───────────────────────────────────────────────
+# Media / video artefacts (CodecStream-specific)
+# ───────────────────────────────────────────────
+uploads/
+tmp/
+temp/
+*.mp4
+*.mkv
+*.mov
+*.avi
+*.webm
+*.ts
+*.m3u8
+*.m4s
+
+# ───────────────────────────────────────────────
+# OS & editor noise
+# ───────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+.vscode/
+!.vscode/extensions.json   # keep shared extension recommendations
+!.vscode/settings.json     # keep shared workspace settings
+
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ───────────────────────────────────────────────
+# Test / coverage artefacts
+# ───────────────────────────────────────────────
+coverage/
+.nyc_output/
+*.lcov
+
+# ───────────────────────────────────────────────
+# Misc
+# ───────────────────────────────────────────────
+*.tgz
+.cache/
+.turbo/
