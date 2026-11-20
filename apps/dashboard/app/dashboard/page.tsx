@@ -24,13 +24,10 @@ export default function DashboardPage() {
 
     async function loadCurrentUser() {
       try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/me`,
-          {
-            credentials: "include",
-            signal: controller.signal,
-          },
-        );
+        const response = await fetch("/api/me", {
+          credentials: "include",
+          signal: controller.signal,
+        });
 
         if (!response.ok) {
           throw new Error(
