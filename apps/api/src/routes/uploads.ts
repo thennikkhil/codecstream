@@ -8,12 +8,13 @@ import {
   UploadPartCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { CreateUploadBody, ObjectIdString, PartsBody } from "@video-infra/shared";
+import { CreateUploadBody, ObjectIdString, PartsBody } from "@codecstream/shared";
 import { env } from "../env";
 import { s3 } from "../s3";
 import { uploads, videos, type UploadDoc } from "../collections";
 import { requireAuth } from "../middleware/requireAuth";
 import { limitsFor } from "../limits";
+import { enqueueProcessing } from "../queue";
 
 const PART_SIZE = 16 * 1024 * 1024; // S3 minimum is 5 MiB, maximum 10,000 parts
 const URL_TTL_SECONDS = 60 * 60; // short on purpose; the client asks again on resume
@@ -168,12 +169,17 @@ uploadsRouter.get("/:id", async (req, res) => {
   });
 });
 
-// POST /uploads/:id/complete  -> verify with S3, then stitch the parts together
+// POST /uploads/:id/complete  -> verify with S3, stitch the parts, queue processing
 uploadsRouter.post("/:id/complete", async (req, res) => {
   const user = res.locals.user as AuthUser;
   const up = await loadUpload(req.params.id, user.id);
   if (!up) return fail(res, 404, "not_found");
+
   if (up.status === "completed") {
+    // Retry-safe: if the first call died before queuing, queue now. Only for a video
+    // still waiting ("uploaded"), so a finished video is never reprocessed.
+    const v = await videos.findOne({ _id: up.videoId });
+    if (v?.status === "uploaded") await enqueueProcessing(up.videoId.toHexString(), up.s3Key);
     res.json({ videoId: up.videoId.toHexString(), alreadyCompleted: true });
     return;
   }
@@ -196,10 +202,13 @@ uploadsRouter.post("/:id/complete", async (req, res) => {
   );
 
   await uploads.updateOne({ _id: up._id }, { $set: { status: "completed" }, $unset: { expiresAt: "" } });
-  // Day 4 will enqueue the processing job here and set status "processing".
-  await videos.updateOne({ _id: up.videoId }, { $set: { status: "uploaded", updatedAt: new Date() } });
+  await videos.updateOne(
+    { _id: up.videoId },
+    { $set: { status: "uploaded", progress: 0, updatedAt: new Date() } },
+  );
+  await enqueueProcessing(up.videoId.toHexString(), up.s3Key);
 
-  res.json({ videoId: up.videoId.toHexString(), status: "uploaded" });
+  res.json({ videoId: up.videoId.toHexString(), status: "processing" });
 });
 
 // DELETE /uploads/:id  -> abort and clean up

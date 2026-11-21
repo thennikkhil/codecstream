@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 export const MeResponse = z.object({
   id: z.string(),
@@ -8,10 +8,10 @@ export const MeResponse = z.object({
 export type MeResponse = z.infer<typeof MeResponse>;
 
 export const ALLOWED_VIDEO_TYPES = [
-  'video/mp4',
-  'video/quicktime',
-  'video/x-matroska',
-  'video/webm',
+  "video/mp4",
+  "video/quicktime",
+  "video/x-matroska",
+  "video/webm",
 ] as const;
 
 export const CreateUploadBody = z.object({
@@ -27,3 +27,23 @@ export const PartsBody = z.object({
 });
 
 export const ObjectIdString = z.string().regex(/^[a-f0-9]{24}$/);
+
+// ---- processing queue (shared by the API and the worker) ----
+
+export const PROCESS_QUEUE = "process-video";
+
+export interface ProcessVideoJob {
+  videoId: string;
+  s3Key: string;
+}
+
+/** Turn redis://:password@host:6379 into BullMQ connection options. */
+export function redisConnection(url: string) {
+  const u = new URL(url);
+  return {
+    host: u.hostname,
+    port: Number(u.port || 6379),
+    username: u.username ? decodeURIComponent(u.username) : undefined,
+    password: u.password ? decodeURIComponent(u.password) : undefined,
+  };
+}

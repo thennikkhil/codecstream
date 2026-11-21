@@ -1,6 +1,13 @@
 import type { ObjectId } from "mongodb";
 import { db } from "./db";
 
+export interface RenditionDoc {
+  name: string;
+  height: number;
+  width: number;
+  bandwidth: number;
+}
+
 export interface VideoDoc {
   _id: ObjectId;
   ownerId: string;
@@ -10,6 +17,17 @@ export interface VideoDoc {
   sizeBytes: number;
   createdAt: Date;
   updatedAt: Date;
+  // written by the worker
+  progress?: number;
+  durationSec?: number;
+  width?: number;
+  height?: number;
+  renditions?: RenditionDoc[];
+  masterKey?: string;
+  thumbnailKey?: string;
+  keyEnc?: string; // AES-128 video key, encrypted with KEY_ENCRYPTION_SECRET. Never returned to clients.
+  error?: string | null;
+  processedAt?: Date;
 }
 
 export interface UploadDoc {

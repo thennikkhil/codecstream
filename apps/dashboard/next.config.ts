@@ -4,7 +4,7 @@ const API_ORIGIN = process.env.API_ORIGIN ?? "http://localhost:4000";
 
 const nextConfig: NextConfig = {
   /* config options here */
-  transpilePackages: ["@video-infra/shared"],
+  transpilePackages: ["@codecstream/shared"],
   experimental: {
     agentFeedback: true,
   },

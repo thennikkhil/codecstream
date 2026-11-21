@@ -7,11 +7,13 @@ import { auth } from "./auth";
 import { ensureIndexes } from "./collections";
 import { requireAuth } from "./middleware/requireAuth";
 import { uploadsRouter } from "./routes/uploads";
+import { videosRouter } from "./routes/videos";
+import { keysRouter } from "./routes/keys";
 
 await ensureIndexes();
 
 const app = express();
-app.set("trust proxy", 1); // we will sit behind a reverse proxy once deployed
+app.set("trust proxy", 1); // we sit behind a reverse proxy once deployed
 
 app.use(
   cors({
@@ -32,11 +34,12 @@ app.get("/me", requireAuth, (_req, res) => {
   res.json({ id, email, name });
 });
 
-app.use(
-  "/uploads",
-  rateLimit({ windowMs: 60_000, limit: 300, standardHeaders: true, legacyHeaders: false }),
-  uploadsRouter,
-);
+const limiter = (limit: number) =>
+  rateLimit({ windowMs: 60_000, limit, standardHeaders: true, legacyHeaders: false });
+
+app.use("/uploads", limiter(300), uploadsRouter);
+app.use("/videos", limiter(300), videosRouter);
+app.use("/keys", limiter(60), keysRouter);
 
 app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   console.error(err);
