@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
@@ -8,6 +8,14 @@ import { Player } from "@/components/Player";
 import { fmtDuration, isBusy, statusBadge, type VideoDto } from "@/lib/types";
 
 export default function VideoPage() {
+  return (
+    <Suspense fallback={<main className="mx-auto mt-12 max-w-4xl p-4">Loading video…</main>}>
+      <VideoDetails />
+    </Suspense>
+  );
+}
+
+function VideoDetails() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const { data: session, isPending } = authClient.useSession();

@@ -4,6 +4,7 @@ import {
   AbortMultipartUploadCommand,
   CompleteMultipartUploadCommand,
   CreateMultipartUploadCommand,
+  HeadObjectCommand,
   ListPartsCommand,
   UploadPartCommand,
 } from "@aws-sdk/client-s3";
@@ -14,7 +15,7 @@ import { s3 } from "../s3";
 import { uploads, videos, type UploadDoc } from "../collections";
 import { requireAuth } from "../middleware/requireAuth";
 import { limitsFor } from "../limits";
-import { enqueueProcessing } from "../queue";
+import { queueCompletedUpload } from "../queue";
 
 const PART_SIZE = 16 * 1024 * 1024; // S3 minimum is 5 MiB, maximum 10,000 parts
 const URL_TTL_SECONDS = 60 * 60; // short on purpose; the client asks again on resume
@@ -54,6 +55,29 @@ async function listAllParts(up: UploadDoc) {
     marker = out.IsTruncated ? String(out.NextPartNumberMarker) : undefined;
   } while (marker);
   return parts.sort((a, b) => a.partNumber - b.partNumber);
+}
+
+function isMissingMultipartUpload(error: unknown) {
+  return error instanceof Error && error.name === "NoSuchUpload";
+}
+
+async function hasCompletedObject(up: UploadDoc) {
+  try {
+    const object = await s3.send(new HeadObjectCommand({ Bucket: env.S3_BUCKET, Key: up.s3Key }));
+    return object.ContentLength === up.size;
+  } catch (error) {
+    if (error instanceof Error && error.name === "NotFound") return false;
+    throw error;
+  }
+}
+
+async function recordCompletion(up: UploadDoc) {
+  // Persist completion before touching Redis so the recovery loop can retry.
+  await uploads.updateOne(
+    { _id: up._id, status: "in_progress" },
+    { $set: { status: "completed" }, $unset: { expiresAt: "" } },
+  );
+  await queueCompletedUpload(up);
 }
 
 // POST /uploads  -> create the video, start the S3 multipart upload
@@ -147,7 +171,10 @@ uploadsRouter.post("/:id/parts", async (req, res) => {
     })),
   );
 
-  await uploads.updateOne({ _id: up._id }, { $set: { expiresAt: new Date(Date.now() + UPLOAD_TTL_MS) } });
+  await uploads.updateOne(
+    { _id: up._id, status: "in_progress" },
+    { $set: { expiresAt: new Date(Date.now() + UPLOAD_TTL_MS) } },
+  );
   res.json({ urls, expiresInSeconds: URL_TTL_SECONDS });
 });
 
@@ -157,11 +184,22 @@ uploadsRouter.get("/:id", async (req, res) => {
   const up = await loadUpload(req.params.id, user.id);
   if (!up) return fail(res, 404, "not_found");
 
-  const parts = up.status === "in_progress" ? await listAllParts(up) : [];
+  let status = up.status;
+  let parts: Awaited<ReturnType<typeof listAllParts>> = [];
+  if (status === "in_progress") {
+    try {
+      parts = await listAllParts(up);
+    } catch (error) {
+      if (!isMissingMultipartUpload(error)) throw error;
+      if (!(await hasCompletedObject(up))) return fail(res, 404, "not_found");
+      await recordCompletion(up);
+      status = "completed";
+    }
+  }
   res.json({
     uploadId: up._id.toHexString(),
     videoId: up.videoId.toHexString(),
-    status: up.status,
+    status,
     size: up.size,
     partSize: up.partSize,
     totalParts: up.totalParts,
@@ -176,37 +214,32 @@ uploadsRouter.post("/:id/complete", async (req, res) => {
   if (!up) return fail(res, 404, "not_found");
 
   if (up.status === "completed") {
-    // Retry-safe: if the first call died before queuing, queue now. Only for a video
-    // still waiting ("uploaded"), so a finished video is never reprocessed.
-    const v = await videos.findOne({ _id: up.videoId });
-    if (v?.status === "uploaded") await enqueueProcessing(up.videoId.toHexString(), up.s3Key);
+    await queueCompletedUpload(up);
     res.json({ videoId: up.videoId.toHexString(), alreadyCompleted: true });
     return;
   }
   if (up.status !== "in_progress") return fail(res, 409, "not_in_progress");
 
-  // Trust S3's list, not the client's claim.
-  const parts = await listAllParts(up);
-  const total = parts.reduce((sum, p) => sum + p.size, 0);
-  if (parts.length !== up.totalParts || total !== up.size) {
-    return fail(res, 409, "incomplete_upload", { have: parts.map((p) => p.partNumber) });
+  try {
+    const parts = await listAllParts(up);
+    const total = parts.reduce((sum, p) => sum + p.size, 0);
+    if (parts.length !== up.totalParts || total !== up.size) {
+      return fail(res, 409, "incomplete_upload", { have: parts.map((p) => p.partNumber) });
+    }
+    await s3.send(
+      new CompleteMultipartUploadCommand({
+        Bucket: env.S3_BUCKET,
+        Key: up.s3Key,
+        UploadId: up.s3UploadId,
+        MultipartUpload: { Parts: parts.map((p) => ({ PartNumber: p.partNumber, ETag: p.etag })) },
+      }),
+    );
+  } catch (error) {
+    if (!isMissingMultipartUpload(error)) throw error;
+    if (!(await hasCompletedObject(up))) return fail(res, 409, "not_in_progress");
   }
 
-  await s3.send(
-    new CompleteMultipartUploadCommand({
-      Bucket: env.S3_BUCKET,
-      Key: up.s3Key,
-      UploadId: up.s3UploadId,
-      MultipartUpload: { Parts: parts.map((p) => ({ PartNumber: p.partNumber, ETag: p.etag })) },
-    }),
-  );
-
-  await uploads.updateOne({ _id: up._id }, { $set: { status: "completed" }, $unset: { expiresAt: "" } });
-  await videos.updateOne(
-    { _id: up.videoId },
-    { $set: { status: "uploaded", progress: 0, updatedAt: new Date() } },
-  );
-  await enqueueProcessing(up.videoId.toHexString(), up.s3Key);
+  await recordCompletion(up);
 
   res.json({ videoId: up.videoId.toHexString(), status: "processing" });
 });

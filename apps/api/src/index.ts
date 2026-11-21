@@ -9,6 +9,7 @@ import { requireAuth } from "./middleware/requireAuth";
 import { uploadsRouter } from "./routes/uploads";
 import { videosRouter } from "./routes/videos";
 import { keysRouter } from "./routes/keys";
+import { startUploadRecovery } from "./queue";
 
 await ensureIndexes();
 
@@ -47,3 +48,4 @@ app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
 });
 
 app.listen(env.PORT, () => console.log(`API listening on :${env.PORT}`));
+startUploadRecovery();

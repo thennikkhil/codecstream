@@ -38,9 +38,9 @@ export function Player({ src }: { src: string }) {
         if (data.details === Hls.ErrorDetails.KEY_LOAD_ERROR) {
           setError("The key for this video was refused, so it cannot be played. You may not have access.");
           hls.destroy();
-        } else if (data.type === Hls.ErrorType.NETWORK_ERROR) {
+        } else if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
           hls.startLoad();
-        } else if (data.type === Hls.ErrorType.MEDIA_ERROR) {
+        } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
           hls.recoverMediaError();
         } else {
           setError("Playback failed.");

@@ -50,6 +50,7 @@ export const uploads = db.collection<UploadDoc>("uploads");
 
 export async function ensureIndexes() {
   await videos.createIndex({ ownerId: 1, createdAt: -1 });
+  await videos.createIndex({ status: 1 });
   await uploads.createIndex({ videoId: 1 });
   await uploads.createIndex({ ownerId: 1, createdAt: -1 });
   // TTL: abandoned uploads disappear after expiresAt (completed ones have it unset)
