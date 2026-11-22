@@ -2,7 +2,7 @@ import { Router } from "express";
 import { ObjectId } from "mongodb";
 import { ObjectIdString } from "@codecstream/shared";
 import { env } from "../env";
-import { videos, type VideoDoc } from "../collections";
+import { settingsOf, videos, type VideoDoc } from "../collections";
 import { requireAuth } from "../middleware/requireAuth";
 
 export const videosRouter = Router();
@@ -23,6 +23,7 @@ function toDto(v: VideoDoc) {
     sizeBytes: v.sizeBytes,
     createdAt: v.createdAt,
     error: v.error ?? null,
+    settings: settingsOf(v),
     renditions: (v.renditions ?? []).map((r) => ({ name: r.name, height: r.height, width: r.width })),
     thumbnailUrl: cdn && v.thumbnailKey ? `${cdn}/${v.thumbnailKey}` : null,
     playbackUrl: cdn && ready && v.masterKey ? `${cdn}/${v.masterKey}` : null,

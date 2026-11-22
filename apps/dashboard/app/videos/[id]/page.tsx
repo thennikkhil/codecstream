@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { api, ApiError } from "@/lib/api";
+import { SecuritySettings } from "@/components/SecuritySettings";
 import { Player } from "@/components/Player";
 import { fmtDuration, isBusy, statusBadge, type VideoDto } from "@/lib/types";
 
@@ -62,7 +63,10 @@ function VideoDetails() {
             <span className={`shrink-0 rounded px-2 py-1 text-xs text-white ${badge.cls}`}>{badge.text}</span>
           </div>
           {video.playbackUrl ? (
-            <Player src={video.playbackUrl} />
+            <>
+              <Player src={video.playbackUrl} videoId={video.id} />
+              <SecuritySettings video={video} onChange={setVideo} />
+            </>
           ) : video.status === "ready" ? (
             <p className="text-amber-500">Ready, but the CDN address is not configured on the API yet.</p>
           ) : video.status === "failed" ? (

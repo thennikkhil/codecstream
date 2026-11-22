@@ -28,7 +28,13 @@ export interface VideoDoc {
   keyEnc?: string; // AES-128 video key, encrypted with KEY_ENCRYPTION_SECRET. Never returned to clients.
   error?: string | null;
   processedAt?: Date;
+  settings?: { watermark: boolean; deviceLimit: boolean };
 }
+
+export const settingsOf = (v: Pick<VideoDoc, "settings">) => ({
+  watermark: v.settings?.watermark ?? true,
+  deviceLimit: v.settings?.deviceLimit ?? true,
+});
 
 export interface UploadDoc {
   _id: ObjectId;
@@ -48,7 +54,10 @@ export interface UploadDoc {
 export const videos = db.collection<VideoDoc>("videos");
 export const uploads = db.collection<UploadDoc>("uploads");
 
+export const watchProgress = db.collection<{ userId: string; videoId: string; positionSec: number; updatedAt: Date }>("watchProgress");
+
 export async function ensureIndexes() {
+  await watchProgress.createIndex({ userId: 1, videoId: 1 }, { unique: true });
   await videos.createIndex({ ownerId: 1, createdAt: -1 });
   await videos.createIndex({ status: 1 });
   await uploads.createIndex({ videoId: 1 });

@@ -11,6 +11,7 @@ export interface VideoDto {
   sizeBytes: number;
   createdAt: string;
   error: string | null;
+  settings: { watermark: boolean; deviceLimit: boolean };
   renditions: { name: string; height: number; width: number }[];
   thumbnailUrl: string | null;
   playbackUrl: string | null;

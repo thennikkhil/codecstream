@@ -10,6 +10,7 @@ import { uploadsRouter } from "./routes/uploads";
 import { videosRouter } from "./routes/videos";
 import { keysRouter } from "./routes/keys";
 import { startUploadRecovery } from "./queue";
+import { playbackRouter } from "./routes/playback";
 
 await ensureIndexes();
 
@@ -38,6 +39,7 @@ app.get("/me", requireAuth, (_req, res) => {
 const limiter = (limit: number) =>
   rateLimit({ windowMs: 60_000, limit, standardHeaders: true, legacyHeaders: false });
 
+app.use(limiter(300), playbackRouter);
 app.use("/uploads", limiter(300), uploadsRouter);
 app.use("/videos", limiter(300), videosRouter);
 app.use("/keys", limiter(60), keysRouter);
