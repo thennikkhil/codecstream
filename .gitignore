@@ -52,7 +52,7 @@ yarn-error.log*
 *.pfx
 .aws/
 
-
+Friendly Gretting App/
 *.zip
 
 # ───────────────────────────────────────────────

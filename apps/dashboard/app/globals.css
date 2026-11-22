@@ -1,8 +1,12 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #eaf4fe;
+  --foreground: #0b1022;
+  --surface: #fafbfe;
+  --border: #d7e4f6;
+  --muted: #4a5874;
+  --brand: #0e4e9f;
 }
 
 @theme inline {
@@ -12,15 +16,52 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  min-height: 100%;
+  background: var(--background);
 }
 
 body {
+  min-height: 100vh;
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+button,
+a,
+input,
+select {
+  transition-duration: 180ms;
+}
+
+button,
+select {
+  cursor: pointer;
+}
+
+@keyframes watermark-drift {
+  0%, 100% { transform: translate(0, 0); }
+  33% { transform: translate(180px, 60px); }
+  66% { transform: translate(40px, 120px); }
+}
+
+.watermark {
+  animation: watermark-drift 14s ease-in-out infinite;
+}
+
+.grid-cols-16 {
+  grid-template-columns: repeat(16, minmax(0, 1fr));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
+import { DashboardShell } from "@/components/DashboardShell";
 import { Uploader, type UploadSnapshot } from "@/lib/uploader";
 
 const EXTENSIONS = ["mp4", "mov", "mkv", "webm"];
@@ -23,21 +24,21 @@ function fmtEta(seconds: number) {
 function badge(snapshot: UploadSnapshot): { text: string; cls: string } {
   switch (snapshot.status) {
     case "starting":
-      return { text: "Starting", cls: "bg-blue-600" };
+      return { text: "Starting", cls: "bg-[#D8EAFD] text-[#0E4E9F]" };
     case "uploading":
-      return { text: "Uploading", cls: "bg-blue-600" };
+      return { text: "Uploading", cls: "bg-[#D8EAFD] text-[#0E4E9F]" };
     case "paused":
       return snapshot.pauseReason === "offline"
-        ? { text: "Connection lost. Resumes automatically", cls: "bg-amber-600" }
-        : { text: "Paused", cls: "bg-amber-600" };
+        ? { text: "Connection lost. Resumes automatically", cls: "bg-[#f4f0e7] text-[#7a6740]" }
+        : { text: "Paused", cls: "bg-[#f4f0e7] text-[#7a6740]" };
     case "completing":
-      return { text: "Finishing", cls: "bg-blue-600" };
+      return { text: "Finishing", cls: "bg-[#D8EAFD] text-[#0E4E9F]" };
     case "done":
-      return { text: "Uploaded", cls: "bg-green-600" };
+      return { text: "Uploaded", cls: "bg-[#edf4ef] text-[#486451]" };
     case "error":
-      return { text: "Failed", cls: "bg-red-600" };
+      return { text: "Failed", cls: "bg-[#f6eceb] text-[#89534f]" };
     default:
-      return { text: "Idle", cls: "bg-neutral-500" };
+      return { text: "Idle", cls: "bg-[#EDF4FD] text-[#4A5874]" };
   }
 }
 
@@ -92,14 +93,23 @@ export default function UploadPage() {
   const statusBadge = snapshot ? badge(snapshot) : null;
 
   return (
-    <main className="mx-auto mt-16 max-w-2xl space-y-6 p-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Upload a video</h1>
-        <Link href="/dashboard" className="text-sm underline">
-          Back to dashboard
+    <DashboardShell>
+    <main className="mx-auto w-full max-w-[1180px] px-5 pb-28 pt-10 sm:px-8 sm:pt-14">
+      <header className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
+        <div>
+          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#4A5874]">New video</p>
+          <h1 className="text-[30px] font-semibold tracking-[-0.035em] text-[#0B1022] sm:text-[36px]">
+            {file && snapshot && snapshot.status !== "idle" ? "Uploading video" : "Upload a video"}
+          </h1>
+          <p className="mt-2 text-sm leading-6 text-[#4A5874]">Large files are uploaded in secure, resumable parts.</p>
+        </div>
+        <Link href="/dashboard" className="text-sm font-medium text-[#4A5874] hover:text-[#0E4E9F]">
+          Back to library
         </Link>
-      </div>
+      </header>
 
+      <div className="mt-9 grid gap-6 lg:grid-cols-[1fr_320px]">
+      <div className="space-y-5">
       {showDropzone && (
         <div
           role="button"
@@ -119,12 +129,24 @@ export default function UploadPage() {
             if (selectedFile) begin(selectedFile);
           }}
           onClick={() => inputRef.current?.click()}
-          className={`cursor-pointer rounded-lg border-2 border-dashed p-12 text-center ${
-            dragging ? "border-blue-500 bg-blue-500/10" : "border-neutral-500/50"
+          className={`cursor-pointer rounded-3xl border-2 border-dashed bg-[#FAFBFE] px-6 py-20 text-center transition ${
+            dragging ? "border-[#0E4E9F] bg-[#D8EAFD]" : "border-[#D7E4F6] hover:border-[#9bb9dc]"
           }`}
         >
-          <p className="font-medium">Drag a video here, or click to choose one</p>
-          <p className="mt-1 text-sm opacity-70">
+          <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-[#D8EAFD] text-[#0E4E9F]">
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="h-6 w-6">
+              <path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </span>
+          <h2 className="mt-5 text-lg font-semibold text-[#0B1022]">Drop your video here</h2>
+          <p className="mt-2 text-sm text-[#4A5874]">
+            or choose a file from your computer
+          </p>
+          <span className="mt-6 inline-flex h-10 items-center rounded-xl border border-[#D7E4F6] bg-white px-5 text-sm font-medium text-[#4A5874] shadow-sm">
+            Choose video
+          </span>
+          <p className="mt-8 text-xs text-[#4A5874]">MP4, MOV, MKV or WebM</p>
+          <p className="mx-auto mt-2 max-w-lg text-xs leading-5 text-[#4A5874]">
             .mp4, .mov, .mkv or .webm. If an upload was interrupted, choose the same file again to resume it.
           </p>
           <input
@@ -141,32 +163,32 @@ export default function UploadPage() {
         </div>
       )}
       {fileError && (
-        <p role="alert" className="text-sm text-red-500">
+        <p role="alert" className="rounded-xl border border-[#ead8d5] bg-[#faf1f0] px-4 py-3 text-sm text-[#80514c]">
           {fileError}
         </p>
       )}
 
       {file && snapshot && snapshot.status !== "idle" && statusBadge && (
-        <section className="space-y-4 rounded-lg border border-neutral-500/40 p-4">
+        <section className="space-y-5 rounded-2xl border border-[#D7E4F6] bg-[#FAFBFE] p-5 sm:p-8">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <p className="truncate font-medium">{file.name}</p>
-              <p className="text-sm opacity-70">
+              <p className="truncate font-semibold text-[#0B1022]">{file.name}</p>
+              <p className="mt-1 text-sm text-[#4A5874]">
                 {fmtBytes(snapshot.uploadedBytes)} of {fmtBytes(snapshot.fileSize)} ·{" "}
                 {snapshot.doneParts}/{snapshot.totalParts} parts
               </p>
             </div>
-            <span className={`shrink-0 rounded px-2 py-1 text-xs text-white ${statusBadge.cls}`}>
+            <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${statusBadge.cls}`}>
               {statusBadge.text}
             </span>
           </div>
 
-          <div className="h-3 w-full overflow-hidden rounded bg-neutral-500/30">
-            <div className="h-full bg-blue-600 transition-all" style={{ width: `${percent}%` }} />
+          <div role="progressbar" aria-label="Upload progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(percent)} className="h-2 w-full overflow-hidden rounded-full bg-[#D7E4F6]">
+            <div className="h-full rounded-full bg-[#0E4E9F] transition-all" style={{ width: `${percent}%` }} />
           </div>
 
-          <div className="flex justify-between text-sm opacity-80">
-            <span>{percent.toFixed(1)}%</span>
+          <div className="flex justify-between text-xs text-[#4A5874]">
+            <span className="font-medium">{percent.toFixed(1)}% complete</span>
             <span>
               {snapshot.status === "uploading" && snapshot.speedBps > 0
                 ? `${fmtBytes(snapshot.speedBps)}/s · ${fmtEta(remaining / snapshot.speedBps)}`
@@ -175,7 +197,7 @@ export default function UploadPage() {
           </div>
 
           {(snapshot.resumes > 0 || snapshot.resumedParts > 0) && snapshot.status !== "done" && (
-            <p className="text-sm text-amber-500">
+            <p className="rounded-xl bg-[#EDF4FD] px-4 py-3 text-sm text-[#4A5874]">
               {snapshot.resumes > 0 ? `Resumed ${snapshot.resumes}×. ` : ""}
               {snapshot.resumedParts > 0
                 ? `${snapshot.resumedParts} of ${snapshot.totalParts} parts were already stored, so they were skipped.`
@@ -183,38 +205,44 @@ export default function UploadPage() {
             </p>
           )}
 
-          <div className="flex flex-wrap gap-0.5" aria-label="Part status">
+          <div className="border-t border-[#D7E4F6] pt-5">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium text-[#0B1022]">Upload parts</p>
+            <p className="text-xs text-[#4A5874]">{snapshot.doneParts} of {snapshot.totalParts} stored</p>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-1" aria-label="Part status">
             {snapshot.parts.map((part, index) => (
               <span
                 key={index}
                 title={`Part ${index + 1}`}
                 className={`h-2.5 w-2.5 rounded-sm ${
                   part === "done"
-                    ? "bg-green-500"
+                    ? "bg-[#0E4E9F]"
                     : part === "active"
-                      ? "animate-pulse bg-blue-500"
-                      : "bg-neutral-500/30"
+                      ? "animate-pulse bg-[#0E4E9F]"
+                      : "bg-[#D7E4F6]"
                 }`}
               />
             ))}
           </div>
+          </div>
 
           {snapshot.error && (
-            <p role="alert" className="text-sm text-red-500">
+            <p role="alert" className="rounded-xl border border-[#ead8d5] bg-[#faf1f0] px-4 py-3 text-sm text-[#80514c]">
               {snapshot.error}
             </p>
           )}
 
           {snapshot.status === "done" && (
-            <p className="text-sm">
+            <p className="rounded-xl bg-[#edf4ef] px-4 py-3 text-sm text-[#486451]">
               Upload complete. Video id <code>{snapshot.videoId}</code>. Processing starts once the worker is built (Day 4).
             </p>
           )}
 
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-3 border-t border-[#D7E4F6] pt-5">
             {snapshot.status === "uploading" && (
               <button
-                className="rounded border px-3 py-1"
+                className="rounded-xl border border-[#D7E4F6] bg-white px-4 py-2.5 text-sm font-medium text-[#4A5874]"
                 onClick={() => uploaderRef.current?.pause("user")}
               >
                 Pause
@@ -222,7 +250,7 @@ export default function UploadPage() {
             )}
             {snapshot.status === "paused" && (
               <button
-                className="rounded bg-blue-600 px-3 py-1 text-white"
+                className="rounded-xl bg-[#0E4E9F] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#0b4288]"
                 onClick={() => uploaderRef.current?.resume()}
               >
                 Resume
@@ -230,7 +258,7 @@ export default function UploadPage() {
             )}
             {snapshot.status === "error" && (
               <button
-                className="rounded bg-blue-600 px-3 py-1 text-white"
+                className="rounded-xl bg-[#0E4E9F] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#0b4288]"
                 onClick={() => begin(file)}
               >
                 Try again
@@ -238,7 +266,7 @@ export default function UploadPage() {
             )}
             {snapshot.status !== "done" && (
               <button
-                className="rounded border px-3 py-1"
+                className="rounded-xl border border-[#D7E4F6] bg-white px-4 py-2.5 text-sm font-medium text-[#4A5874]"
                 onClick={() => void uploaderRef.current?.cancel()}
               >
                 Cancel
@@ -246,7 +274,7 @@ export default function UploadPage() {
             )}
             {snapshot.status === "done" && (
               <button
-                className="rounded border px-3 py-1"
+                className="rounded-xl border border-[#D7E4F6] bg-white px-4 py-2.5 text-sm font-medium text-[#4A5874]"
                 onClick={() => {
                   uploaderRef.current?.destroy();
                   setFile(null);
@@ -259,6 +287,23 @@ export default function UploadPage() {
           </div>
         </section>
       )}
+      </div>
+      <aside className="space-y-4">
+        <div className="rounded-2xl border border-[#D7E4F6] bg-[#EDF4FD] p-5">
+          <h2 className="text-sm font-semibold text-[#0B1022]">Resumable by design</h2>
+          <p className="mt-2 text-xs leading-5 text-[#4A5874]">
+            Uploads are split into parts, so interrupted transfers can continue without starting over.
+          </p>
+        </div>
+        <div className="rounded-2xl border border-[#D7E4F6] bg-[#FAFBFE] p-5">
+          <h2 className="text-sm font-semibold text-[#0B1022]">Secure upload</h2>
+          <p className="mt-2 text-xs leading-5 text-[#4A5874]">
+            Your video is sent directly to storage. Playback becomes available after processing is complete.
+          </p>
+        </div>
+      </aside>
+      </div>
     </main>
+    </DashboardShell>
   );
 }

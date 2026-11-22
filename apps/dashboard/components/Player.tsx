@@ -120,7 +120,7 @@ export function Player({ src, videoId }: { src: string; videoId: string }) {
   return (
     <div className="space-y-2">
       {/* Fullscreen is on this box, not the <video>, so the watermark stays visible. */}
-      <div ref={boxRef} className="relative aspect-video w-full overflow-hidden rounded bg-black">
+      <div ref={boxRef} className="relative aspect-video w-full overflow-hidden rounded-2xl bg-black shadow-[0_20px_50px_rgba(11,16,34,0.16)]">
         <video
           ref={videoRef}
           controls
@@ -146,8 +146,8 @@ export function Player({ src, videoId }: { src: string; videoId: string }) {
           </div>
         )}
       </div>
-      {error && <p className="text-sm text-red-500">{error}</p>}
-      <div className="flex items-center gap-3 text-sm">
+      {error && <p className="rounded-xl border border-[#ead8d5] bg-[#faf1f0] px-4 py-3 text-sm text-[#80514c]">{error}</p>}
+      <div className="flex items-center gap-3 text-sm text-[#4A5874]">
         {levels.length > 0 && (
           <>
             <label htmlFor="quality">Quality</label>
@@ -159,7 +159,7 @@ export function Player({ src, videoId }: { src: string; videoId: string }) {
                 setSelected(i);
                 if (hlsRef.current) hlsRef.current.currentLevel = i;
               }}
-              className="rounded border border-neutral-500/50 bg-transparent px-2 py-1"
+              className="rounded-lg border border-[#D7E4F6] bg-[#FAFBFE] px-2 py-1.5 text-xs"
             >
               <option value={-1}>Auto{selected === -1 && activeHeight ? ` (${activeHeight}p)` : ""}</option>
               {levels.map((l) => (
@@ -170,7 +170,7 @@ export function Player({ src, videoId }: { src: string; videoId: string }) {
             </select>
           </>
         )}
-        <button className="rounded border px-2 py-1" onClick={() => boxRef.current?.requestFullscreen()}>
+        <button className="rounded-lg border border-[#D7E4F6] bg-[#FAFBFE] px-3 py-1.5 text-xs" onClick={() => boxRef.current?.requestFullscreen()}>
           Fullscreen
         </button>
       </div>
