@@ -2,6 +2,14 @@
 
 Video infrastructure, not a YouTube clone. The dashboard is the first customer of my own API.
 
+## What I built
+
+Resumable uploads, an encrypted HLS pipeline, token-gated playback, and a searchable transcript. Amazon Transcribe creates timestamped transcript chunks, and keyword search jumps to matching moments in the video.
+
+## What I'd do next
+
+AI Q&A over the transcript.
+
 ## Deployment
 
 Deploy `apps/dashboard` to Vercel with the Next.js preset and access to the repository workspace. Set `API_ORIGIN` in Production and Preview to the HTTPS Express origin for each environment. The dashboard proxies authentication, upload controls, and HLS key requests through that origin.

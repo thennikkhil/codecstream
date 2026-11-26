@@ -29,6 +29,9 @@ export interface VideoDoc {
   error?: string | null;
   processedAt?: Date;
   settings?: { watermark: boolean; deviceLimit: boolean };
+  processingSec?: number;
+  transcriptStatus?: "processing" | "ready" | "failed" | "skipped";
+  transcriptError?: string | null;
 }
 
 export const settingsOf = (v: Pick<VideoDoc, "settings">) => ({
@@ -56,7 +59,11 @@ export const uploads = db.collection<UploadDoc>("uploads");
 
 export const watchProgress = db.collection<{ userId: string; videoId: string; positionSec: number; updatedAt: Date }>("watchProgress");
 
+export const chunks = db.collection<{ videoId: string; startSec: number; endSec: number; text: string }>("transcriptChunks");
+
 export async function ensureIndexes() {
+  await chunks.createIndex({ videoId: 1 });
+  await chunks.createIndex({ text: "text" });
   await watchProgress.createIndex({ userId: 1, videoId: 1 }, { unique: true });
   await videos.createIndex({ ownerId: 1, createdAt: -1 });
   await videos.createIndex({ status: 1 });

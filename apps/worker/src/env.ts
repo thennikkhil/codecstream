@@ -2,6 +2,8 @@ import "dotenv/config";
 import { tmpdir } from "node:os";
 import { z } from "zod";
 
+const emptyToUndefined = (v: unknown) => (v === "" ? undefined : v);
+
 const schema = z.object({
   REDIS_URL: z.string().min(1),
   MONGODB_URI: z.string().min(1),
@@ -13,6 +15,7 @@ const schema = z.object({
   PUBLIC_APP_URL: z.string().url().transform((v) => v.replace(/\/$/, "")),
   WORK_DIR: z.string().default(tmpdir()),
   FFMPEG_PRESET: z.string().default("veryfast"),
+  TRANSCRIBE_LANGS: z.string().default("en-US,en-IN"),
 });
 
 export const env = schema.parse(process.env);

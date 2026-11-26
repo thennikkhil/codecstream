@@ -7,6 +7,7 @@ import type { ProcessVideoJob } from "@codecstream/shared";
 import { encryptKey } from "./crypto";
 import { videos } from "./db";
 import { env } from "./env";
+import { runAiStage } from "./ai";
 import { probe, thumbnail, transcodeRendition } from "./ffmpeg";
 import { peakBandwidth, pickLadder, widthFor } from "./ladder";
 import { downloadToFile, uploadOutputs } from "./s3";
@@ -106,6 +107,7 @@ export async function processVideo(job: Job<ProcessVideoJob>) {
       {
         $set: {
           status: "ready",
+          processingSec: Math.round((Date.now() - t0) / 100) / 10,
           progress: 100,
           durationSec: info.durationSec,
           width: info.width,
@@ -130,6 +132,7 @@ export async function processVideo(job: Job<ProcessVideoJob>) {
     console.log(
       `[${videoId}] ready: ${ladder.length} renditions, ${info.durationSec.toFixed(1)}s of video in ${seconds.toFixed(1)}s`,
     );
+    await runAiStage({ videoId, input, dir, prefix }); // transcript and search index
     return { renditions: ladder.length, seconds };
   } finally {
     // Runs on success, failure and retry, so a failed job never leaves disk behind.
