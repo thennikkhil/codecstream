@@ -13,6 +13,7 @@ const schema = z.object({
   BETTER_AUTH_SECRET: z.string().min(32),
   BETTER_AUTH_URL: z.string().url(),
   OWNER_EMAIL: z.preprocess(emptyToUndefined, z.string().optional()),
+  DEMO_EMAIL: z.preprocess(emptyToUndefined, z.string().optional()),
   // 32 random bytes, base64. Must match the worker's value.
   KEY_ENCRYPTION_SECRET: z
     .string()

@@ -6,6 +6,7 @@ import { DashboardShell } from "@/components/DashboardShell";
 import { authClient } from "@/lib/auth-client";
 import { api, ApiError } from "@/lib/api";
 import { SecuritySettings } from "@/components/SecuritySettings";
+import { AiPanel } from "@/components/AiPanel";
 import { Player } from "@/components/Player";
 import { fmtDuration, isBusy, statusBadge, type VideoDto } from "@/lib/types";
 
@@ -98,6 +99,9 @@ function VideoDetails() {
               {video.playbackUrl && (
                 <aside>
                   <SecuritySettings video={video} onChange={setVideo} />
+                  <div className="mt-6">
+                    <AiPanel videoId={video.id} />
+                  </div>
                 </aside>
               )}
             </div>
